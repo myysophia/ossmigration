@@ -1,0 +1,23 @@
+service: rds-backup-to-oss
+
+provider:
+  name: aws
+  runtime: python3.9
+  memorySize: 1024
+  timeout: 900
+  region: ap-southeast-2
+  environment:
+    OSS_ACCESS_KEY: ${ssm:/aliyun/access_key}
+    OSS_SECRET_KEY: ${ssm:/aliyun/secret_key}
+
+functions:
+  backupToOss:
+    handler: src.main.lambda_handler
+    description: "Copy RDS backups from S3 to Aliyun OSS"
+    events:
+      - s3:
+          bucket: novacloud-devops
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: mysql/
+            - suffix: .parquet
