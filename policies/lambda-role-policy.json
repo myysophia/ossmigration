@@ -1,0 +1,29 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:ListBucket",
+                "s3:GetObjectTagging"
+            ],
+            "Resource": [
+                "arn:aws:s3:::in-novacloud-backup/*",
+                "arn:aws:s3:::in-novacloud-backup",
+                "arn:aws:s3:::novacloud-devops/*",
+                "arn:aws:s3:::novacloud-devops"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:*:*"
+        }
+    ]
+}
