@@ -28,7 +28,7 @@ aws lambda update-function-configuration \
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
         OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
         OSS_BUCKET=iotdb-backup,
-        AWS_REGION=${AWS_REGION},
+        S3_REGION=${AWS_REGION},
         S3_BUCKET=novacloud-devops,
         S3_PREFIX=mysql/
     }"
