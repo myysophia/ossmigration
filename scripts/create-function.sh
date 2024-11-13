@@ -44,12 +44,13 @@ if [ -z "${ACCOUNT_ID}" ]; then
     exit 1
 fi
 
-# 加载 LAYER_ARN
-source "${PROJECT_ROOT}/.env"
-if [ -z "${LAYER_ARN}" ]; then
-    echo -e "${RED}Missing LAYER_ARN in .env file. Please run create-layer.sh first.${NC}"
+# 检查 LAYER_ARN
+if [ ! -f "${PROJECT_ROOT}/.env" ] || ! grep -q "LAYER_ARN=" "${PROJECT_ROOT}/.env"; then
+    echo -e "${RED}Missing LAYER_ARN. Please run create-layer.sh first${NC}"
     exit 1
 fi
+
+source "${PROJECT_ROOT}/.env"
 
 echo -e "${YELLOW}Creating Lambda function...${NC}"
 
