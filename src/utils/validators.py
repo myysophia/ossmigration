@@ -1,5 +1,7 @@
 import os
 from utils.logger import get_logger
+from services.oss_service import OSSUploader
+from config.oss_config import get_oss_config
 
 logger = get_logger(__name__)
 
@@ -44,3 +46,18 @@ def validate_s3_event(event):
     except Exception as e:
         logger.error(f"Event validation failed: {str(e)}")
         return None
+
+def test_oss_connection():
+    try:
+        config = get_oss_config()
+        uploader = OSSUploader(config)
+        # 测试列出 bucket
+        bucket_info = uploader.bucket.get_bucket_info()
+        print(f"Successfully connected to OSS bucket: {bucket_info.name}")
+        return True
+    except Exception as e:
+        print(f"Failed to connect to OSS: {str(e)}")
+        return False
+
+if __name__ == "__main__":
+    test_oss_connection()

@@ -44,6 +44,13 @@ if [ -z "${ACCOUNT_ID}" ]; then
     exit 1
 fi
 
+# 加载 LAYER_ARN
+source "${PROJECT_ROOT}/.env"
+if [ -z "${LAYER_ARN}" ]; then
+    echo -e "${RED}Missing LAYER_ARN in .env file. Please run create-layer.sh first.${NC}"
+    exit 1
+fi
+
 echo -e "${YELLOW}Creating Lambda function...${NC}"
 
 # 检查函数是否已存在
@@ -63,6 +70,7 @@ aws lambda create-function \
     --timeout 300 \
     --memory-size 512 \
     --region ${AWS_REGION} \
+    --layers ${LAYER_ARN} \
     --zip-file fileb://${PROJECT_ROOT}/function.zip
 
 if [ $? -eq 0 ]; then
