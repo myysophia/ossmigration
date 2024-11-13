@@ -1,1 +1,1 @@
-{"errorMessage": "Unable to import module 'main': No module named 'oss2'", "errorType": "Runtime.ImportModuleError", "requestId": "", "stackTrace": []}
+{"statusCode": 500, "body": "{\n  \"error\": \"Configuration error\",\n  \"message\": \"Missing required environment variables: ALIYUN_ACCESS_KEY, ALIYUN_SECRET_KEY\"\n}"}
