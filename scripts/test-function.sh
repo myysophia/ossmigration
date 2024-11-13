@@ -4,7 +4,7 @@
 FUNCTION_NAME="rds-backup-to-oss"
 AWS_REGION="ap-southeast-2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR" && pwd )"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # 创建测试事件
-cat > ${PROJECT_ROOT}/tests/event.json << EOF
+cat > ${PROJECT_ROOT}/test/event.json << EOF
 {
   "Records": [
     {
@@ -42,16 +42,16 @@ EOF
 echo -e "${YELLOW}Invoking Lambda function...${NC}"
 aws lambda invoke \
     --function-name ${FUNCTION_NAME} \
-    --payload file://${PROJECT_ROOT}/tests/event.json \
+    --payload file://${PROJECT_ROOT}/test/event.json \
     --region ${AWS_REGION} \
     --cli-binary-format raw-in-base64-out \
-    ${PROJECT_ROOT}/tests/response.json
+    ${PROJECT_ROOT}/test/response.json
 
 # 检查响应
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Function invoked successfully${NC}"
     echo "Response:"
-    cat ${PROJECT_ROOT}/tests/response.json
+    cat ${PROJECT_ROOT}/test/response.json
     
     # 获取函数日志
     echo -e "\n${YELLOW}Recent function logs:${NC}"
@@ -80,7 +80,7 @@ from datetime import datetime
 # OSS 配置
 access_key_id = os.getenv('ALIYUN_ACCESS_KEY')
 access_key_secret = os.getenv('ALIYUN_SECRET_KEY')
-endpoint = 'https://oss-ap-southeast-1.aliyuncs.com'
+endpoint = 'https://oss-cn-hangzhou.aliyuncs.com'
 bucket_name = 'iotdb-backup'
 
 # 初始化 OSS 客户端

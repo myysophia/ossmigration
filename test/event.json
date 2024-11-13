@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "eventVersion": "2.1",
+      "eventSource": "aws:s3",
+      "awsRegion": "ap-southeast-2",
+      "eventTime": "2024-01-20T00:00:00.000Z",
+      "eventName": "ObjectCreated:Put",
+      "s3": {
+        "bucket": {
+          "name": "novacloud-devops",
+          "arn": "arn:aws:s3:::novacloud-devops"
+        },
+        "object": {
+          "key": "mysql/test.sql",
+          "size": 1024,
+          "eTag": "test-etag"
+        }
+      }
+    }
+  ]
+}
