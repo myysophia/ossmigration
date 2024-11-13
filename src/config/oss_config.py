@@ -1,35 +1,23 @@
 import os
-from utils.logger import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger()
 
-class OSSConfig:
-    def __init__(self, region):
-        self.access_key = os.environ.get('ALIYUN_ACCESS_KEY')
-        self.secret_key = os.environ.get('ALIYUN_SECRET_KEY')
-        
-        if not self.access_key or not self.secret_key:
-            logger.error("Missing Aliyun credentials")
-            raise ValueError("Missing required environment variables: ALIYUN_ACCESS_KEY or ALIYUN_SECRET_KEY")
-            
-        self.region = region
-        self.config = self._get_oss_config()
-
-    def _get_oss_config(self):
-        """统一使用杭州的 bucket 配置"""
-        return {
-            'endpoint': 'oss-cn-hangzhou.aliyuncs.com',  # 杭州 endpoint
-            'bucket': 'iotdb-backup',                    # 统一使用的 bucket
-            'prefix': self._get_region_prefix()          # 根据源区域设置前缀
-        }
+def get_oss_config():
+    """获取 OSS 配置"""
+    config = {
+        'access_key_id': os.environ.get('ALIYUN_ACCESS_KEY'),
+        'access_key_secret': os.environ.get('ALIYUN_SECRET_KEY'),
+        'endpoint': os.environ.get('OSS_ENDPOINT'),
+        'bucket_name': os.environ.get('OSS_BUCKET')
+    }
     
-    def _get_region_prefix(self):
-        """根据源区域生成存储前缀，用于区分不同区域的备份"""
-        region_mapping = {
-            'ap-southeast-2': 'australia',
-            'ap-south-1': 'india'
-        }
-        return f"rds-backup/{region_mapping.get(self.region, 'unknown')}"
-
-def get_oss_config(region):
-    return OSSConfig(region)
+    # 验证必要的配置
+    missing_configs = [k for k, v in config.items() if not v]
+    if missing_configs:
+        error_msg = f"Missing OSS configurations: {', '.join(missing_configs)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+    
+    logger.info(f"OSS config loaded: endpoint={config['endpoint']}, bucket={config['bucket_name']}")
+    return config
