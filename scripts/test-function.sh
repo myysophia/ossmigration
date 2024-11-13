@@ -4,7 +4,7 @@
 FUNCTION_NAME="rds-backup-to-oss"
 AWS_REGION="ap-southeast-2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -27,7 +27,10 @@ aws lambda update-function-configuration \
         ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
         OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
-        OSS_BUCKET=iotdb-backup
+        OSS_BUCKET=iotdb-backup,
+        AWS_REGION=${AWS_REGION},
+        S3_BUCKET=novacloud-devops,
+        S3_PREFIX=mysql/
     }"
 
 # 等待配置更新
