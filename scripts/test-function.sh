@@ -12,7 +12,30 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# 检查环境变量
+if [ -z "${ALIYUN_ACCESS_KEY}" ] || [ -z "${ALIYUN_SECRET_KEY}" ]; then
+    echo -e "${RED}Please set ALIYUN_ACCESS_KEY and ALIYUN_SECRET_KEY environment variables${NC}"
+    exit 1
+fi
+
+# 更新 Lambda 环境变量
+echo -e "${YELLOW}Updating Lambda environment variables...${NC}"
+aws lambda update-function-configuration \
+    --function-name ${FUNCTION_NAME} \
+    --region ${AWS_REGION} \
+    --environment "Variables={
+        ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
+        ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
+        OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
+        OSS_BUCKET=iotdb-backup
+    }"
+
+# 等待配置更新
+echo "Waiting for configuration update..."
+sleep 5
+
 # 创建测试事件
+mkdir -p ${PROJECT_ROOT}/test
 cat > ${PROJECT_ROOT}/test/event.json << EOF
 {
   "Records": [

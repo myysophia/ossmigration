@@ -62,6 +62,11 @@ if aws lambda get-function --function-name ${FUNCTION_NAME} --region ${AWS_REGIO
     sleep 10
 fi
 
+# 加载环境变量
+if [ -f "${PROJECT_ROOT}/.env" ]; then
+    source "${PROJECT_ROOT}/.env"
+fi
+
 # 创建函数
 aws lambda create-function \
     --function-name ${FUNCTION_NAME} \
@@ -72,6 +77,12 @@ aws lambda create-function \
     --memory-size 512 \
     --region ${AWS_REGION} \
     --layers ${LAYER_ARN} \
+    --environment "Variables={
+        ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
+        ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
+        OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
+        OSS_BUCKET=iotdb-backup
+    }" \
     --zip-file fileb://${PROJECT_ROOT}/function.zip
 
 if [ $? -eq 0 ]; then
