@@ -14,7 +14,7 @@ S3_BUCKET="$2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 ZIP_FILE="${PROJECT_ROOT}/function.zip"
-
+CONFIG_DIR="${PROJECT_ROOT}/config"
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
