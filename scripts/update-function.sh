@@ -1,11 +1,19 @@
 #!/bin/bash
 
+# 检查命令行参数
+if [ "$#" -ne 2 ]; then
+    echo -e "${RED}Usage: $0 <region> <bucket>${NC}"
+    echo -e "Example: $0 ap-south-1 in-novacloud-backup"
+    exit 1
+fi
+
 # 设置变量
 FUNCTION_NAME="rds-backup-to-oss"
-AWS_REGION="ap-southeast-2"
+AWS_REGION="$1"
+S3_BUCKET="$2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
-ZIP_FILE="${PROJECT_ROOT}/function.zip"  # 使用绝对路径
+ZIP_FILE="${PROJECT_ROOT}/function.zip"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -105,3 +113,18 @@ else
     echo -e "${RED}Function is in state: ${FUNCTION_STATE}${NC}"
     exit 1
 fi
+
+# 更新函数配置
+echo "Updating Lambda function configuration..."
+aws lambda update-function-configuration \
+    --function-name ${FUNCTION_NAME} \
+    --region ${AWS_REGION} \
+    --environment "Variables={
+        ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
+        ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
+        OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
+        OSS_BUCKET=iotdb-backup,
+        S3_REGION=${AWS_REGION},
+        S3_BUCKET=${S3_BUCKET},
+        S3_PREFIX=mysql/
+    }"
