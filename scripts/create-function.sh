@@ -95,6 +95,50 @@ aws lambda create-function \
     }" \
     --zip-file fileb://${PROJECT_ROOT}/function.zip
 
+# 配置 S3 触发器函数
+configure_s3_trigger() {
+    local FUNCTION_NAME=$1
+    local AWS_REGION=$2
+    local S3_BUCKET=$3
+    local LAMBDA_ARN=$4
+    local ACCOUNT_ID=$5
+    
+    echo "Configuring S3 trigger for bucket: ${S3_BUCKET}"
+    
+    # 1. 添加 Lambda 权限
+    echo "Adding Lambda permission for ${S3_BUCKET}..."
+    aws lambda add-permission \
+        --function-name ${FUNCTION_NAME} \
+        --statement-id "S3Trigger${S3_BUCKET}" \
+        --action "lambda:InvokeFunction" \
+        --principal s3.amazonaws.com \
+        --source-arn "arn:aws:s3:::${S3_BUCKET}" \
+        --source-account "${ACCOUNT_ID}" \
+        --region ${AWS_REGION} 2>/dev/null || true
+    
+    # 2. 等待权限生效
+    echo "Waiting for permissions to propagate..."
+    sleep 5
+    
+    # 3. 准备通知配置
+    echo "Preparing notification configuration..."
+    NOTIFICATION_CONFIG=$(cat ${CONFIG_DIR}/s3-notification-template.json | \
+        jq --arg arn "${LAMBDA_ARN}" \
+        '.LambdaFunctionConfigurations[0].LambdaFunctionArn = $arn')
+    
+    # 4. 配置 S3 触发器
+    echo "Adding S3 trigger for ${S3_BUCKET}..."
+    if aws s3api put-bucket-notification-configuration \
+        --bucket ${S3_BUCKET} \
+        --notification-configuration "${NOTIFICATION_CONFIG}"; then
+        echo -e "${GREEN}Successfully configured trigger for ${S3_BUCKET}${NC}"
+        return 0
+    else
+        echo -e "${RED}Failed to configure trigger for ${S3_BUCKET}${NC}"
+        return 1
+    fi
+}
+
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Successfully created Lambda function${NC}"
     
@@ -108,44 +152,8 @@ if [ $? -eq 0 ]; then
     fi
     
     # 配置 S3 触发器
-    echo "Configuring S3 triggers..."
-
-    
-    for BUCKET in "${BUCKETS[@]}"; do
-        echo "Processing bucket: ${BUCKET}"
-        
-        # 1. 添加 Lambda 权限
-        echo "Adding Lambda permission for ${BUCKET}..."
-        aws lambda add-permission \
-            --function-name ${FUNCTION_NAME} \
-            --statement-id "S3Trigger${BUCKET}" \
-            --action "lambda:InvokeFunction" \
-            --principal s3.amazonaws.com \
-            --source-arn "arn:aws:s3:::${BUCKET}" \
-            --source-account "${ACCOUNT_ID}" \
-            --region ${AWS_REGION} || true
-        
-        # 2. 等待权限生效
-        echo "Waiting for permissions to propagate..."
-        sleep 5
-        
-        # 3. 准备通知配置
-        echo "Preparing notification configuration..."
-        NOTIFICATION_CONFIG=$(cat ${CONFIG_DIR}/s3-notification-template.json | \
-            jq --arg arn "${LAMBDA_ARN}" \
-            '.LambdaFunctionConfigurations[0].LambdaFunctionArn = $arn')
-        
-        # 4. 配置 S3 触发器
-        echo "Adding S3 trigger for ${BUCKET}..."
-        aws s3api put-bucket-notification-configuration \
-            --bucket ${BUCKET} \
-            --notification-configuration "${NOTIFICATION_CONFIG}" || {
-                echo -e "${RED}Failed to configure trigger for ${BUCKET}${NC}"
-                continue
-            }
-        
-        echo -e "${GREEN}Successfully configured trigger for ${BUCKET}${NC}"
-    done
+    echo "Configuring S3 trigger..."
+    configure_s3_trigger "${FUNCTION_NAME}" "${AWS_REGION}" "${S3_BUCKET}" "${LAMBDA_ARN}" "${ACCOUNT_ID}"
     
     echo -e "${GREEN}Lambda function setup complete${NC}"
     echo -e "${GREEN}Function ARN: ${LAMBDA_ARN}${NC}"
