@@ -39,9 +39,9 @@ mkdir -p ${BUILD_DIR}/python
 echo -e "${YELLOW}Building dependencies in Docker...${NC}"
 docker run --rm \
     -v ${BUILD_DIR}:/var/task \
-    -v ${PROJECT_ROOT}/requirements.txt:/requirements.txt \
+    -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
     public.ecr.aws/sam/build-python3.9:latest \
-    pip install -r /requirements.txt -t /var/task/python
+    /bin/bash -c "pip install -r /var/task/requirements.txt -t /var/task/python --platform manylinux2014_x86_64 --only-binary=:all: --upgrade"
 
 # 检查依赖是否安装成功
 if [ ! "$(ls -A ${BUILD_DIR}/python)" ]; then
