@@ -23,16 +23,13 @@ class OSSUploader:
     
     def upload_file(self, local_path: str, oss_path: str) -> bool:
         try:
-            # 确保本地文件存在
             if not Path(local_path).exists():
                 logger.error(f"Local file not found: {local_path}")
                 return False
             
-            # 上传文件
             logger.info(f"Uploading {local_path} to OSS path: {oss_path}")
             self.bucket.put_object_from_file(oss_path, local_path)
             
-            # 验证上传
             if self.bucket.object_exists(oss_path):
                 logger.info(f"Successfully uploaded file to OSS: {oss_path}")
                 return True
