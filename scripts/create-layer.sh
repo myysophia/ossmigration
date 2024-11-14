@@ -1,11 +1,18 @@
 #!/bin/bash
 
+# 检查命令行参数
+if [ "$#" -ne 1 ]; then
+    echo -e "${RED}Usage: $0 <region>${NC}"
+    echo -e "Example: $0 ap-south-1"
+    exit 1
+fi
+
 # 设置变量
 LAYER_NAME="python-deps"
 LAYER_DESC="Python dependencies for Lambda"
-AWS_REGION="ap-southeast-2"
+AWS_REGION="$1"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -66,10 +73,10 @@ echo -e "${YELLOW}ZIP file contents:${NC}"
 unzip -l ${PROJECT_ROOT}/layer.zip
 
 # 发布 Layer
-echo -e "${YELLOW}Publishing layer...${NC}"
+echo -e "${YELLOW}Publishing layer to ${AWS_REGION}...${NC}"
 LAYER_VERSION=$(aws lambda publish-layer-version \
-    --layer-name ${LAYER_NAME} \
-    --description "${LAYER_DESC}" \
+    --layer-name "${LAYER_NAME}-${AWS_REGION}" \
+    --description "${LAYER_DESC} for ${AWS_REGION}" \
     --zip-file fileb://${PROJECT_ROOT}/layer.zip \
     --compatible-runtimes python3.9 \
     --region ${AWS_REGION} \
@@ -79,20 +86,22 @@ LAYER_VERSION=$(aws lambda publish-layer-version \
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Successfully created layer version: ${LAYER_VERSION}${NC}"
     # 保存 Layer ARN 到环境文件
-    LAYER_ARN="arn:aws:lambda:${AWS_REGION}:$(aws sts get-caller-identity --query Account --output text):layer:${LAYER_NAME}:${LAYER_VERSION}"
+    LAYER_ARN="arn:aws:lambda:${AWS_REGION}:$(aws sts get-caller-identity --query Account --output text):layer:${LAYER_NAME}-${AWS_REGION}:${LAYER_VERSION}"
     
     # 更新或添加 LAYER_ARN 到 .env 文件
     if [ ! -f "${PROJECT_ROOT}/.env" ]; then
         touch "${PROJECT_ROOT}/.env"
     fi
     
-    if grep -q "LAYER_ARN=" "${PROJECT_ROOT}/.env"; then
-        sed -i "s|LAYER_ARN=.*|LAYER_ARN=${LAYER_ARN}|" "${PROJECT_ROOT}/.env"
+    # 使用区域特定的环境变量名
+    ENV_VAR_NAME="LAYER_ARN_${AWS_REGION//-/_}"
+    if grep -q "${ENV_VAR_NAME}=" "${PROJECT_ROOT}/.env"; then
+        sed -i "s|${ENV_VAR_NAME}=.*|${ENV_VAR_NAME}=${LAYER_ARN}|" "${PROJECT_ROOT}/.env"
     else
-        echo "LAYER_ARN=${LAYER_ARN}" >> "${PROJECT_ROOT}/.env"
+        echo "${ENV_VAR_NAME}=${LAYER_ARN}" >> "${PROJECT_ROOT}/.env"
     fi
     
-    echo -e "${GREEN}Layer ARN: ${LAYER_ARN}${NC}"
+    echo -e "${GREEN}Layer ARN for ${AWS_REGION}: ${LAYER_ARN}${NC}"
 else
     echo -e "${RED}Failed to create layer${NC}"
     exit 1
@@ -108,4 +117,4 @@ echo -e "${YELLOW}Cleaning up...${NC}"
 rm -rf ${BUILD_DIR}
 rm -f ${PROJECT_ROOT}/layer.zip
 
-echo -e "${GREEN}Layer creation complete${NC}"
+echo -e "${GREEN}Layer creation complete for ${AWS_REGION}${NC}"
