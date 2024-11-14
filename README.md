@@ -29,3 +29,13 @@ root - ERROR - Configuration error: Missing required environment variables: ALIY
 ## 缺少权限
  这个错误表明 Lambda 函数的 IAM 角色缺少 KMS 解密权限。
  Failed to download file from S3: An error occurred (AccessDenied) when calling the GetObject operation: User: arn:aws:sts::059012766390:assumed-role/rds-backup-to-oss-role/rds-backup-to-oss is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:ap-southeast-2:059012766390:key/22584e80-f470-4c1a-9998-7e84cccf2b01 because no identity-based policy allows the kms:Decrypt action
+
+ 获取角色 ARN
+ROLE_ARN=$(aws lambda get-function \
+    --function-name rds-backup-to-oss \
+    --query 'Configuration.Role' \
+    --output text)
+
+显示角色策略
+aws iam list-attached-role-policies \
+    --role-name $(echo $ROLE_ARN | cut -d'/' -f2)
