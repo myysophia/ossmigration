@@ -17,7 +17,7 @@ NC='\033[0m'
 echo -e "${YELLOW}Creating KMS policy...${NC}"
 POLICY_ARN=$(aws iam create-policy \
     --policy-name "${FUNCTION_NAME}-kms-policy" \
-    --policy-document file://${PROJECT_ROOT}/iam/kms-policy.json \
+    --policy-document file://${PROJECT_ROOT}/policies/kms-policy.json \
     --query 'Policy.Arn' \
     --output text)
 
