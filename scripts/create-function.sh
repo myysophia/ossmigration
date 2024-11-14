@@ -98,13 +98,6 @@ aws lambda create-function \
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Successfully created Lambda function${NC}"
     
-    # 配置环境变量
-    echo "Configuring environment variables..."
-    aws lambda update-function-configuration \
-        --function-name ${FUNCTION_NAME} \
-        --region ${AWS_REGION} \
-        --environment "Variables={AWS_REGION=${AWS_REGION}}"
-    
     # 获取 Lambda 函数 ARN
     LAMBDA_ARN=$(aws lambda get-function --function-name ${FUNCTION_NAME} \
         --region ${AWS_REGION} --query 'Configuration.FunctionArn' --output text)
