@@ -93,15 +93,16 @@ if [ $? -eq 0 ]; then
         touch "${PROJECT_ROOT}/.env"
     fi
     
-    # 使用区域特定的环境变量名
-    ENV_VAR_NAME="LAYER_ARN_${AWS_REGION//-/_}"
-    if grep -q "${ENV_VAR_NAME}=" "${PROJECT_ROOT}/.env"; then
-        sed -i "s|${ENV_VAR_NAME}=.*|${ENV_VAR_NAME}=${LAYER_ARN}|" "${PROJECT_ROOT}/.env"
+    # 更新或添加 LAYER_ARN
+    if grep -q "^LAYER_ARN=" "${PROJECT_ROOT}/.env"; then
+        # 如果存在则替换
+        sed -i "s|^LAYER_ARN=.*|LAYER_ARN=${LAYER_ARN}|" "${PROJECT_ROOT}/.env"
     else
-        echo "${ENV_VAR_NAME}=${LAYER_ARN}" >> "${PROJECT_ROOT}/.env"
+        # 如果不存在则添加
+        echo "LAYER_ARN=${LAYER_ARN}" >> "${PROJECT_ROOT}/.env"
     fi
     
-    echo -e "${GREEN}Layer ARN for ${AWS_REGION}: ${LAYER_ARN}${NC}"
+    echo -e "${GREEN}Layer ARN: ${LAYER_ARN}${NC}"
 else
     echo -e "${RED}Failed to create layer${NC}"
     exit 1
