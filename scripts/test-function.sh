@@ -1,10 +1,18 @@
 #!/bin/bash
 
+# 检查命令行参数
+if [ "$#" -ne 2 ]; then
+    echo -e "${RED}Usage: $0 <region> <bucket>${NC}"
+    echo -e "Example: $0 ap-south-1 in-novacloud-backup"
+    exit 1
+fi
+
 # 设置变量
 FUNCTION_NAME="rds-backup-to-oss"
-AWS_REGION="ap-southeast-2"
+AWS_REGION="$1"
+S3_BUCKET="$2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR" && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -18,25 +26,6 @@ if [ -z "${ALIYUN_ACCESS_KEY}" ] || [ -z "${ALIYUN_SECRET_KEY}" ]; then
     exit 1
 fi
 
-# 更新 Lambda 环境变量
-echo -e "${YELLOW}Updating Lambda environment variables...${NC}"
-aws lambda update-function-configuration \
-    --function-name ${FUNCTION_NAME} \
-    --region ${AWS_REGION} \
-    --environment "Variables={
-        ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
-        ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
-        OSS_ENDPOINT=https://oss-cn-hangzhou.aliyuncs.com,
-        OSS_BUCKET=iotdb-backup,
-        S3_REGION=${AWS_REGION},
-        S3_BUCKET=novacloud-devops,
-        S3_PREFIX=mysql/
-    }"
-
-# 等待配置更新
-echo "Waiting for configuration update..."
-sleep 5
-
 # 创建测试事件
 mkdir -p ${PROJECT_ROOT}/test
 cat > ${PROJECT_ROOT}/test/event.json << EOF
@@ -45,13 +34,13 @@ cat > ${PROJECT_ROOT}/test/event.json << EOF
     {
       "eventVersion": "2.1",
       "eventSource": "aws:s3",
-      "awsRegion": "ap-southeast-2",
+      "awsRegion": "${AWS_REGION}",
       "eventTime": "2024-01-20T00:00:00.000Z",
       "eventName": "ObjectCreated:Put",
       "s3": {
         "bucket": {
-          "name": "novacloud-devops",
-          "arn": "arn:aws:s3:::novacloud-devops"
+          "name": "${S3_BUCKET}",
+          "arn": "arn:aws:s3:::${S3_BUCKET}"
         },
         "object": {
           "key": "mysql/test.sql",
@@ -81,16 +70,30 @@ if [ $? -eq 0 ]; then
     
     # 获取函数日志
     echo -e "\n${YELLOW}Recent function logs:${NC}"
-    aws logs get-log-events \
+    # 等待几秒让日志可用
+    sleep 5
+    
+    # 获取最新的日志流
+    LOG_STREAM=$(aws logs describe-log-streams \
         --log-group-name "/aws/lambda/${FUNCTION_NAME}" \
-        --log-stream-name $(aws logs describe-log-streams \
+        --region ${AWS_REGION} \
+        --order-by LastEventTime \
+        --descending \
+        --limit 1 \
+        --query 'logStreams[0].logStreamName' \
+        --output text)
+    
+    if [ ! -z "${LOG_STREAM}" ]; then
+        aws logs get-log-events \
             --log-group-name "/aws/lambda/${FUNCTION_NAME}" \
-            --order-by LastEventTime \
-            --descending \
-            --limit 1 \
-            --query 'logStreams[0].logStreamName' \
-            --output text) \
-        --limit 20
+            --log-stream-name ${LOG_STREAM} \
+            --region ${AWS_REGION} \
+            --limit 20 \
+            --query 'events[*].message' \
+            --output text
+    else
+        echo -e "${RED}No log streams found${NC}"
+    fi
 
     # 等待几秒让文件同步完成
     echo -e "\n${YELLOW}Waiting for file synchronization...${NC}"
@@ -123,4 +126,5 @@ EOF
 
 else
     echo -e "${RED}Function invocation failed${NC}"
+    exit 1
 fi
