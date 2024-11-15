@@ -37,22 +37,21 @@ mkdir -p ${BUILD_DIR}/python
 
 # 在 Docker 中构建依赖
 echo -e "${YELLOW}Building dependencies in Docker...${NC}"
-# docker run --rm \
-#     -v ${BUILD_DIR}:/var/task \
-#     -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
-#     public.ecr.aws/sam/build-python3.9:latest \
-#     /bin/bash -c "pip install --target /var/task/python cryptography --platform manylinux2014_x86_64 --only-binary=:all: && pip install -r /var/task/requirements.txt --target /var/task/python"
-
-
-# docker run --rm \
-#     -v ${BUILD_DIR}:/var/task \
-#     -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
-#     public.ecr.aws/sam/build-python3.9:latest \
-#     /bin/bash -c "pip install -r /var/task/requirements.txt -t /var/task/python --platform manylinux2014_x86_64 --only-binary=:all: --upgrade"    
-
-
-docker run --rm -v ${BUILD_DIR}:/var/task public.ecr.aws/sam/build-python3.9:latest \
-    pip install cryptography -t /var/task/python
+docker run --rm \
+    -v ${BUILD_DIR}:/var/task \
+    -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
+    public.ecr.aws/sam/build-python3.9:latest \
+    /bin/bash -c "
+        # 安装基础工具
+        yum install -y gcc python3-devel openssl-devel libffi-devel && \
+        # 先安装 cryptography
+        pip install --target /var/task/python cryptography==39.0.1 --platform manylinux2014_x86_64 --only-binary=:all: && \
+        # 安装其他依赖
+        pip install -r /var/task/requirements.txt --target /var/task/python --platform manylinux2014_x86_64 --only-binary=:all: --upgrade && \
+        # 删除不必要的文件
+        find /var/task/python -type d -name \"tests\" -exec rm -rf {} + 2>/dev/null || true && \
+        find /var/task/python -type d -name \"__pycache__\" -exec rm -rf {} + 2>/dev/null || true
+    "
 
 # 检查依赖是否安装成功
 if [ ! "$(ls -A ${BUILD_DIR}/python)" ]; then
