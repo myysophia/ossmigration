@@ -24,7 +24,7 @@ NC='\033[0m'
 
 # 创建 IAM 角色
 echo -e "${YELLOW}Creating IAM role...${NC}"
-ROLE_NAME="rds-backup-to-oss-role"
+ROLE_NAME="rds-backup-to-oss-role-in"
 TRUST_POLICY='{
   "Version": "2012-10-17",
   "Statement": [{
@@ -58,7 +58,9 @@ S3_POLICY='{
             "Effect": "Allow",
             "Action": [
                 "s3:GetObject",
-                "s3:ListBucket"
+                "s3:GetObjectVersion",
+                "s3:ListBucket",
+                "s3:GetObjectTagging"
             ],
             "Resource": [
                 "arn:aws:s3:::'${S3_BUCKET}'",
