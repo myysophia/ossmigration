@@ -14,65 +14,29 @@ S3_BUCKET="$2"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 CONFIG_DIR="${PROJECT_ROOT}/config"
+ZIP_FILE="${PROJECT_ROOT}/function.zip"
 
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# 检查必要工具
-command -v jq >/dev/null 2>&1 || { echo -e "${RED}jq is required but not installed.${NC}" >&2; exit 1; }
+# 创建部署包
+echo -e "${YELLOW}Creating deployment package...${NC}"
+BUILD_DIR=$(mktemp -d)
+trap 'rm -rf ${BUILD_DIR}' EXIT
 
-# 检查配置文件
-if [ ! -f "${CONFIG_DIR}/s3-notification-template.json" ]; then
-    echo -e "${RED}Missing s3-notification-template.json${NC}"
-    exit 1
-fi
+# 复制源代码
+cp -r ${PROJECT_ROOT}/src/* ${BUILD_DIR}/
 
-# 检查是否存在 .env 文件
-if [ ! -f "${PROJECT_ROOT}/.env" ]; then
-    echo -e "${RED}Missing .env file. Please run create-role.sh first.${NC}"
-    exit 1
-fi
+# 安装依赖
+pip3 install -r ${PROJECT_ROOT}/requirements.txt -t ${BUILD_DIR} --no-cache-dir
 
-# 加载 ROLE_ARN
-source "${PROJECT_ROOT}/.env"
-
-if [ -z "${ROLE_ARN}" ]; then
-    echo -e "${RED}Missing ROLE_ARN in .env file${NC}"
-    exit 1
-fi
-
-# 获取 AWS 账户 ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-if [ -z "${ACCOUNT_ID}" ]; then
-    echo -e "${RED}Failed to get AWS account ID${NC}"
-    exit 1
-fi
-
-# 检查 LAYER_ARN
-if [ ! -f "${PROJECT_ROOT}/.env" ] || ! grep -q "LAYER_ARN=" "${PROJECT_ROOT}/.env"; then
-    echo -e "${RED}Missing LAYER_ARN. Please run create-layer.sh first${NC}"
-    exit 1
-fi
-
-source "${PROJECT_ROOT}/.env"
-
-echo -e "${YELLOW}Creating Lambda function...${NC}"
-
-# 检查函数是否已存在
-if aws lambda get-function --function-name ${FUNCTION_NAME} --region ${AWS_REGION} &>/dev/null; then
-    echo -e "${YELLOW}Function already exists. Deleting...${NC}"
-    aws lambda delete-function --function-name ${FUNCTION_NAME} --region ${AWS_REGION}
-    echo "Waiting for function deletion..."
-    sleep 10
-fi
-
-# 加载环境变量
-if [ -f "${PROJECT_ROOT}/.env" ]; then
-    source "${PROJECT_ROOT}/.env"
-fi
+# 创建 ZIP 文件
+cd ${BUILD_DIR}
+zip -r9 ${ZIP_FILE} .
+cd - > /dev/null
 
 # 创建函数
 aws lambda create-function \
@@ -83,7 +47,6 @@ aws lambda create-function \
     --timeout 300 \
     --memory-size 512 \
     --region ${AWS_REGION} \
-    --layers ${LAYER_ARN} \
     --environment "Variables={
         ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
@@ -93,7 +56,7 @@ aws lambda create-function \
         S3_BUCKET=${S3_BUCKET},
         S3_PREFIX=mysql/
     }" \
-    --zip-file fileb://${PROJECT_ROOT}/function.zip
+    --zip-file fileb://${ZIP_FILE}
 
 # 配置 S3 触发器函数
 configure_s3_trigger() {

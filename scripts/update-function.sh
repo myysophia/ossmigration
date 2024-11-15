@@ -184,7 +184,6 @@ echo "Updating Lambda function configuration..."
 aws lambda update-function-configuration \
     --function-name ${FUNCTION_NAME} \
     --region ${AWS_REGION} \
-    --layers ${LAYER_ARN} \
     --environment "Variables={
         ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
