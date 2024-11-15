@@ -22,6 +22,19 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# 检查 LAYER_ARN
+if [ ! -f "${PROJECT_ROOT}/.env" ]; then
+    echo -e "${RED}Missing .env file. Please run create-layer.sh first.${NC}"
+    exit 1
+fi
+
+source "${PROJECT_ROOT}/.env"
+
+if [ -z "${LAYER_ARN}" ]; then
+    echo -e "${RED}Missing LAYER_ARN in .env file${NC}"
+    exit 1
+fi
+
 # 创建 IAM 角色
 echo -e "${YELLOW}Creating IAM role...${NC}"
 ROLE_NAME="rds-backup-to-oss-role-in"
@@ -87,16 +100,13 @@ if [ -z "${ROLE_ARN}" ]; then
     exit 1
 fi
 
-# 创建部署包
+# 创建部署包（只包含源代码）
 echo -e "${YELLOW}Creating deployment package...${NC}"
 BUILD_DIR=$(mktemp -d)
 trap 'rm -rf ${BUILD_DIR}' EXIT
 
-# 复制源代码
+# 只复制源代码
 cp -r ${PROJECT_ROOT}/src/* ${BUILD_DIR}/
-
-# 安装依赖
-pip3 install -r ${PROJECT_ROOT}/requirements.txt -t ${BUILD_DIR} --no-cache-dir
 
 # 创建 ZIP 文件
 cd ${BUILD_DIR}
@@ -112,6 +122,7 @@ aws lambda create-function \
     --timeout 300 \
     --memory-size 512 \
     --region ${AWS_REGION} \
+    --layers ${LAYER_ARN} \
     --environment "Variables={
         ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
