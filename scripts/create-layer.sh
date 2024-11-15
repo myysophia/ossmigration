@@ -43,11 +43,16 @@ echo -e "${YELLOW}Building dependencies in Docker...${NC}"
 #     public.ecr.aws/sam/build-python3.9:latest \
 #     /bin/bash -c "pip install --target /var/task/python cryptography --platform manylinux2014_x86_64 --only-binary=:all: && pip install -r /var/task/requirements.txt --target /var/task/python"
 
-docker run --rm \
-    -v ${BUILD_DIR}:/var/task \
-    -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
-    public.ecr.aws/sam/build-python3.9:latest \
-    /bin/bash -c "pip install --target /var/task/python cryptography --platform manylinux2014_x86_64 --only-binary=:all: && pip install -r /var/task/requirements.txt --target /var/task/python"
+
+# docker run --rm \
+#     -v ${BUILD_DIR}:/var/task \
+#     -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
+#     public.ecr.aws/sam/build-python3.9:latest \
+#     /bin/bash -c "pip install -r /var/task/requirements.txt -t /var/task/python --platform manylinux2014_x86_64 --only-binary=:all: --upgrade"    
+
+
+docker run --rm -v ${BUILD_DIR}:/var/task public.ecr.aws/sam/build-python3.9:latest \
+    pip install cryptography -t /var/task/python
 
 # 检查依赖是否安装成功
 if [ ! "$(ls -A ${BUILD_DIR}/python)" ]; then
