@@ -72,7 +72,7 @@ fi
 
 # 创建 ZIP 文件
 cd ${BUILD_DIR}
-zip -r9 ${PROJECT_ROOT}/layer.zip python/
+zip -r9 ${PROJECT_ROOT}/layer.zip python/ -q
 
 # 发布 Layer
 LAYER_VERSION=$(aws lambda publish-layer-version \
