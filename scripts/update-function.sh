@@ -171,11 +171,20 @@ else
     exit 1
 fi
 
+# 检查 LAYER_ARN
+if [ ! -f "${PROJECT_ROOT}/.env" ] || ! grep -q "LAYER_ARN=" "${PROJECT_ROOT}/.env"; then
+    echo -e "${RED}Missing LAYER_ARN. Please run create-layer.sh first${NC}"
+    exit 1
+fi
+
+source "${PROJECT_ROOT}/.env"
+
 # 更新函数配置
 echo "Updating Lambda function configuration..."
 aws lambda update-function-configuration \
     --function-name ${FUNCTION_NAME} \
     --region ${AWS_REGION} \
+    --layers ${LAYER_ARN} \
     --environment "Variables={
         ALIYUN_ACCESS_KEY=${ALIYUN_ACCESS_KEY},
         ALIYUN_SECRET_KEY=${ALIYUN_SECRET_KEY},
@@ -185,3 +194,9 @@ aws lambda update-function-configuration \
         S3_BUCKET=${S3_BUCKET},
         S3_PREFIX=mysql/
     }"
+
+# 等待函数配置更新完成
+echo "Waiting for function configuration update to complete..."
+aws lambda wait function-updated \
+    --function-name ${FUNCTION_NAME} \
+    --region ${AWS_REGION}
