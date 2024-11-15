@@ -8,11 +8,11 @@
       "eventName": "ObjectCreated:Put",
       "s3": {
         "bucket": {
-          "name": "novacloud-devops",
-          "arn": "arn:aws:s3:::novacloud-devops"
+          "name": "in-novacloud-backup",
+          "arn": "arn:aws:s3:::in-novacloud-backup"
         },
         "object": {
-          "key": "mysql/test.sql",
+          "key": "mysql/go.mod",
           "size": 1024,
           "eTag": "test-etag"
         }
