@@ -17,7 +17,10 @@ class OSSUploader:
         self.bucket = oss2.Bucket(
             self.auth,
             config['endpoint'],
-            config['bucket_name']
+            config['bucket_name'],
+            enable_crc=True,
+            is_cname=False,
+            connect_timeout=30
         )
         logger.info(f"Initialized OSS uploader for bucket: {config['bucket_name']}")
     

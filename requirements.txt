@@ -2,28 +2,19 @@
 boto3==1.26.137
 botocore==1.29.137
 
-# 阿里云 OSS SDK
+# 阿里云 OSS SDK - 使用基础版本
 oss2==2.16.0
-
-# 日期时间处理
-python-dateutil==2.8.2
-
-# 请求处理
 requests==2.31.0
 urllib3==1.26.18
-
-# 工具包
-six==1.16.0
-certifi==2023.7.22
 crcmod==1.7
 
-# 加密（指定兼容版本）
-cryptography==39.0.1
+# 工具包
+python-dateutil==2.8.2
+six==1.16.0
+certifi==2023.7.22
 
-# 日志处理
+# 日志和配置
 python-json-logger==2.0.7
-
-# 环境变量处理
 python-dotenv==1.0.0
 
 

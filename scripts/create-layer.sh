@@ -43,10 +43,8 @@ docker run --rm \
     public.ecr.aws/sam/build-python3.9:latest \
     /bin/bash -c "
         # 安装基础工具
-        yum install -y gcc python3-devel openssl-devel libffi-devel && \
-        # 先安装 cryptography
-        pip install --target /var/task/python cryptography==39.0.1 --platform manylinux2014_x86_64 --only-binary=:all: && \
-        # 安装其他依赖
+        yum install -y gcc python3-devel && \
+        # 安装依赖
         pip install -r /var/task/requirements.txt --target /var/task/python --platform manylinux2014_x86_64 --only-binary=:all: --upgrade && \
         # 删除不必要的文件
         find /var/task/python -type d -name \"tests\" -exec rm -rf {} + 2>/dev/null || true && \
