@@ -22,6 +22,69 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# 创建 IAM 角色
+echo -e "${YELLOW}Creating IAM role...${NC}"
+ROLE_NAME="rds-backup-to-oss-role"
+TRUST_POLICY='{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Service": "lambda.amazonaws.com"
+    },
+    "Action": "sts:AssumeRole"
+  }]
+}'
+
+# 创建角色
+aws iam create-role \
+    --role-name ${ROLE_NAME} \
+    --assume-role-policy-document "${TRUST_POLICY}" || true
+
+# 添加策略
+aws iam attach-role-policy \
+    --role-name ${ROLE_NAME} \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+aws iam attach-role-policy \
+    --role-name ${ROLE_NAME} \
+    --policy-arn arn:aws:iam::aws:policy/AWSLambdaExecute
+
+# 创建 S3 访问策略
+S3_POLICY='{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::'${S3_BUCKET}'",
+                "arn:aws:s3:::'${S3_BUCKET}'/mysql/*"
+            ]
+        }
+    ]
+}'
+
+aws iam put-role-policy \
+    --role-name ${ROLE_NAME} \
+    --policy-name "S3Access" \
+    --policy-document "${S3_POLICY}"
+
+# 等待角色创建完成
+echo "Waiting for role to be ready..."
+sleep 10
+
+# 获取角色 ARN
+ROLE_ARN=$(aws iam get-role --role-name ${ROLE_NAME} --query 'Role.Arn' --output text)
+
+if [ -z "${ROLE_ARN}" ]; then
+    echo -e "${RED}Failed to get role ARN${NC}"
+    exit 1
+fi
+
 # 创建部署包
 echo -e "${YELLOW}Creating deployment package...${NC}"
 BUILD_DIR=$(mktemp -d)
