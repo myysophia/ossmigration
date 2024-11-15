@@ -34,29 +34,21 @@ docker run --rm \
     /bin/bash -c "
         # 安装基础工具
         yum install -y gcc python3-devel && \
-        # 先安装二进制依赖
+        # 安装所有依赖，但使用旧版本的 oss2
         pip install \
-            --platform manylinux2014_x86_64 \
-            --implementation cp \
-            --python-version 3.9 \
-            --only-binary=:all: \
             --target /var/task/python \
             --no-cache-dir \
             boto3==1.26.137 \
             botocore==1.29.137 \
             requests==2.31.0 \
             urllib3==1.26.18 \
+            crcmod==1.7 \
             python-dateutil==2.8.2 \
             six==1.16.0 \
             certifi==2023.7.22 \
             python-json-logger==2.0.7 \
-            python-dotenv==1.0.0 && \
-        # 单独安装需要编译的包，使用旧版本的 oss2
-        pip install \
-            --target /var/task/python \
-            --no-cache-dir \
-            crcmod==1.7 \
-            oss2==2.14.0 && \
+            python-dotenv==1.0.0 \
+            oss2==2.9.1 && \
         # 清理不必要的文件
         find /var/task/python -type d -name \"tests\" -exec rm -rf {} + 2>/dev/null || true && \
         find /var/task/python -type d -name \"__pycache__\" -exec rm -rf {} + 2>/dev/null || true && \
