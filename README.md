@@ -20,6 +20,10 @@ aws lambda invoke --function-name rds-backup-to-oss --payload '{"Records": [{"s3
 部署函数
 ./scripts/update-function.sh
 
+
+查看函数配置
+ aws lambda get-function-configuration --function-name rds-backup-to-oss --region ap-south-1
+
 # 报错处理
 ## 确实配置
 root - ERROR - Configuration error: No S3 bucket configured for region:
@@ -43,7 +47,8 @@ aws iam list-attached-role-policies \
 ## 函数报错
 2024-11-15T02:00:51.606000+00:00 2024/11/15/[$LATEST]8a74f726bf4145379ecf9910bbcce2f6 [ERROR] Runtime.ImportModuleError: Unable to import module 'main': /lib64/libc.so.6: version `GLIBC_2.28' not found (required by /var/task/cryptography/hazmat/bindings/_rust.abi3.so)
 
-创建一个包含必要依赖（如较新版本的 glibc 或 cryptography 的特定版本）的 Lambda 层。该层可以附加到 Lambda 函数中，使 Lambda 在运行时访问该依赖。
+创建一个包含必要依赖（如较新版本的 glibc 或 cryptography 的特定版本）的 Lambda 层。该层可以附加到 Lambda 函数中，使 Lambda 在运行时访问该依赖。需要查看函数配置中对应的层版本是否正确？
+
 
 # 架构
 
