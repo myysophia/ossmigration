@@ -43,7 +43,7 @@ cat > ${PROJECT_ROOT}/test/event.json << EOF
           "arn": "arn:aws:s3:::${S3_BUCKET}"
         },
         "object": {
-          "key": "mysql/test.sql",
+          "key": "mysql/go.mod",
           "size": 1024,
           "eTag": "test-etag"
         }

@@ -1,1 +1,1 @@
-{"statusCode": 500, "body": "{\n  \"error\": \"Configuration error\",\n  \"message\": \"Missing required environment variables: ALIYUN_ACCESS_KEY, ALIYUN_SECRET_KEY\"\n}"}
+{"errorMessage": "Unable to import module 'main': /lib64/libc.so.6: version `GLIBC_2.28' not found (required by /var/task/cryptography/hazmat/bindings/_rust.abi3.so)", "errorType": "Runtime.ImportModuleError", "requestId": "", "stackTrace": []}
