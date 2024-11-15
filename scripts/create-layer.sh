@@ -32,10 +32,16 @@ docker run --rm \
     -v ${PROJECT_ROOT}/requirements.txt:/var/task/requirements.txt \
     public.ecr.aws/sam/build-python3.9:latest \
     /bin/bash -c "
-        # 安装编译工具
+        # 安装基础工具
         yum install -y gcc python3-devel && \
-        # 先安装其他依赖
-        pip install --target /var/task/python \
+        # 安装所有依赖，使用 manylinux2014 平台
+        pip install \
+            --platform manylinux2014_x86_64 \
+            --implementation cp \
+            --python-version 3.9 \
+            --only-binary=:all: \
+            --target /var/task/python \
+            --no-cache-dir \
             boto3==1.26.137 \
             botocore==1.29.137 \
             requests==2.31.0 \
@@ -45,14 +51,13 @@ docker run --rm \
             six==1.16.0 \
             certifi==2023.7.22 \
             python-json-logger==2.0.7 \
-            python-dotenv==1.0.0 && \
-        # 单独安装 oss2
-        pip install --target /var/task/python oss2==2.16.0 && \
+            python-dotenv==1.0.0 \
+            oss2==2.15.0 && \
         # 清理不必要的文件
         find /var/task/python -type d -name \"tests\" -exec rm -rf {} + 2>/dev/null || true && \
         find /var/task/python -type d -name \"__pycache__\" -exec rm -rf {} + 2>/dev/null || true && \
         find /var/task/python -type d -name \"*.dist-info\" -exec rm -rf {} + 2>/dev/null || true && \
-        find /var/task/python -type d -name \"*.egg-info\" -exec rm -rf {} + 2>/dev/null || true
+        find /var/task/python -type d -name \"*.egg-info\" -exec rm -rf {} + 2>/dev/null
     "
 
 # 检查是否成功安装
